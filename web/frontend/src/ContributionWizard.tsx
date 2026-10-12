@@ -34,7 +34,7 @@ export function ContributionWizard({ children, category, rules, onSubmit, footer
     const panel = form.current?.querySelector(`[data-contribution-step="${index}"]`);
     const title = stepTitle(steps[index]);
     const invalid = [...(panel?.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input,select,textarea') || [])].find(input => !input.checkValidity());
-    if (invalid) { setError('Confira este campo para continuar.'); if (index === step) { if (invalid.getClientRects().length) invalid.focus(); else panel?.querySelector<HTMLButtonElement>('[role="combobox"]')?.focus(); } return false; }
+    if (invalid) { setError('Confira os campos desta etapa.'); if (index === step) { if (invalid.getClientRects().length) invalid.focus(); else panel?.querySelector<HTMLButtonElement>('[role="combobox"]')?.focus(); } return false; }
     if (rules[title] === false) { setError('Preencha as informações desta etapa para continuar.'); return false; }
     setError('');
     return true;
@@ -59,10 +59,10 @@ export function ContributionWizard({ children, category, rules, onSubmit, footer
       {steps.map((content, index) => <div key={stepTitle(content)} data-contribution-step={index} hidden={step !== index} className="space-y-4 [&>label]:text-base [&>label]:font-normal [&>fieldset]:border-0 [&>fieldset]:p-0 [&>fieldset>legend]:sr-only">{stepContent(content)}</div>)}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </div>
-    <div className="flex items-center justify-between gap-3 border-t bg-muted/10 px-5 py-4 sm:px-8">
+    <div className="flex items-center justify-between gap-3 border-t bg-muted/10 px-5 py-5 sm:px-8 sm:py-8">
       <Button type="button" variant="outline" disabled={step === 0 || busy} onClick={() => { setError(''); setStep(current => current - 1); }}><ArrowLeft />Voltar</Button>
       {step < steps.length - 1 && <Button type="button" disabled={busy} onClick={next}>Continuar<ArrowRight /></Button>}
     </div>
     {footer && <div className="px-5 pb-5 sm:px-8">{footer}</div>}
-  </form>{preview}</div>;
+  </form>{preview&&<div className="hidden md:block">{preview}</div>}</div>;
 }

@@ -26,6 +26,8 @@ dotnet run --project web/backend/GuiaDaTi.Api --no-build
 
 Para desenvolver a interface após gerar o catálogo: `npm --prefix web/frontend run dev`.
 
+Para executar o backend e o frontend ao mesmo tempo, use `./scripts/dev.ps1`. Abra `http://localhost:5173`. Pressione Ctrl+C para encerrar os dois servidores.
+
 O servidor aceita conexões da rede na porta 5080. Em outro dispositivo conectado à mesma rede, abra `http://IP-DA-MAQUINA:5080`. Consulte o IPv4 da conexão Ethernet ou Wi-Fi com `ipconfig`. Na própria máquina, você também pode usar `http://localhost:5080`.
 
 A conta administradora gerencia campanhas em `/admin/anuncios`. Consulte os espaços, limites e instruções de armazenamento em [Administração de anúncios](docs/publicidade.md).
@@ -51,10 +53,11 @@ O workflow não faz deploy na VPS. Para executar o artefato, configure `CATALOG_
 ## Configuração
 
 - `CATALOG_PATH`: snapshot validado, padrão local `tools/catalog/dist/catalog.json`.
-- `SITE_URL`: origem canônica no build, padrão `https://guiadati.com`.
+- `SITE_URL`: origem canônica no build, padrão `https://guia.fulldev.com.br`.
 - `VITE_DATA_REPOSITORY`: padrão `https://github.com/guia-da-ti/guia-da-ti-dados`.
 - `DISCUSSIONS_REPOSITORY`: repositório público das conversas, padrão `guia-da-ti/guia-da-ti-dados` (somente no backend).
 - `DISCUSSIONS_TOKEN`: credencial de leitura da API GraphQL do GitHub (somente no backend).
+- `CATALOG_TARGET_BRANCH`: branch que recebe PRs de contribuições, padrão `catalog-review`. Deve existir e ser diferente da branch principal.
 
 Frontend e backend devem usar o mesmo snapshot. Nunca coloque segredos em variáveis `VITE_*`.
 
@@ -81,7 +84,7 @@ A pesquisa acontece ao digitar, após uma pausa de 400 ms, e também ao pression
 
 ### Publicar pelo Guia
 
-Cadastre uma OAuth App no GitHub. Configure `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` somente no backend, em User Secrets para desenvolvimento ou no gerenciador de segredos da hospedagem. O callback é `/api/auth/callback`, no mesmo endereço usado para abrir o site. Por exemplo, `http://localhost:5081/api/auth/callback` no desenvolvimento com Vite. Configure a URL pública HTTPS correspondente em produção. O proxy deve preservar o endereço e protocolo usados no callback. O fluxo usa OAuth com PKCE e o escopo `public_repo` exigido pela API para publicar em nome do visitante em repositórios públicos.
+Cadastre uma OAuth App no GitHub. Configure `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` somente no backend, em User Secrets para desenvolvimento ou no gerenciador de segredos da hospedagem. O callback é `/api/auth/callback`, no mesmo endereço usado para abrir o site. Por exemplo, `http://localhost:5081/api/auth/callback` no desenvolvimento com Vite. Configure a URL pública HTTPS correspondente em produção. Defina `FORWARDED_PROXY_IP` com o IP do proxy reverso para o backend reconhecer o protocolo HTTPS. O fluxo usa OAuth com PKCE e o escopo `public_repo` exigido pela API para publicar em nome do visitante em repositórios públicos.
 
 O login abre em uma janela menor e retorna para `/auth/complete.html`, que avisa a página original e fecha a janela. O Guia confirma a sessão pelo backend e atualiza o usuário sem recarregar a página. Se o navegador bloquear a janela, o login usa a navegação normal. A foto de perfil usa o ID autenticado do GitHub. No ambiente local, o Vite redireciona `127.0.0.1` para `localhost` para manter o endereço cadastrado no OAuth.
 

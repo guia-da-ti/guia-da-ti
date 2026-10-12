@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog } from 'radix-ui';
-import { Github, Moon, Sun, LogOut, HeartHandshake } from 'lucide-react';
+import { Github, Moon, Sun, LogOut, HeartHandshake, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { categories, labels, taxonomy } from './catalog';
@@ -140,7 +140,7 @@ export function UserControls({ dark, toggleTheme }: { dark: boolean; toggleTheme
   </DropdownMenu>;
 }
 
-const loginPanelClass = 'fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 space-y-4 overflow-y-auto rounded-xl border bg-popover p-6 text-popover-foreground shadow-lg';
+const loginPanelClass = 'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-lg';
 
 function GitHubHelp() { return <SectionGuide section="github" label="Primeira vez no GitHub?" />; }
 
@@ -151,10 +151,10 @@ function LoginPrompt({ enabled }: { enabled: boolean }) {
   return <Dialog.Root open={open} onOpenChange={setOpen}>
     <Dialog.Trigger asChild><Button size="sm"><Github className="size-4" aria-hidden="true" /><span className="sr-only sm:not-sr-only">Entrar com GitHub</span></Button></Dialog.Trigger>
     <Dialog.Portal><Dialog.Overlay data-slot="dialog-overlay" className="fixed inset-0 z-50 bg-black/50" /><Dialog.Content data-slot="dialog-content" className={loginPanelClass}>
-      <Dialog.Title className="text-lg font-semibold">Entre para participar</Dialog.Title>
-      <Dialog.Description className="text-sm leading-relaxed text-muted-foreground">{enabled ? 'Use sua conta do GitHub para criar tópicos e responder no fórum.' : 'O login está indisponível no momento. Você pode continuar lendo o fórum.'}</Dialog.Description>
-      <GitHubHelp />
-      <div className="flex flex-wrap gap-2"><LoginButton enabled={enabled} /><Dialog.Close asChild><Button variant="ghost" size="sm">Cancelar</Button></Dialog.Close></div>
+      <div className="border-b px-6 py-4 pr-12"><Dialog.Title className="text-lg font-semibold">Entre para participar</Dialog.Title><Dialog.Description className="mt-1 text-sm leading-relaxed text-muted-foreground">{enabled ? 'Entre com o GitHub para criar tópicos e responder no fórum.' : 'O login pelo GitHub está indisponível. Você ainda pode ler o fórum.'}</Dialog.Description></div>
+      <div className="space-y-4 p-6"><GitHubHelp /></div>
+      <div className="flex flex-wrap gap-2 border-t px-6 py-4"><LoginButton enabled={enabled} /><Dialog.Close asChild><Button variant="ghost" size="sm">Cancelar</Button></Dialog.Close></div>
+      <Dialog.Close aria-label="Fechar diálogo" className="absolute right-4 top-4 rounded-sm p-1 text-muted-foreground hover:bg-accent hover:text-foreground"><X aria-hidden="true" className="size-4" /></Dialog.Close>
     </Dialog.Content></Dialog.Portal>
   </Dialog.Root>;
 }
@@ -166,8 +166,8 @@ function LoginButton({ enabled = true, compact = false }: { enabled?: boolean; c
   return <Button size="sm" onClick={auth?.startLogin} disabled={auth?.pending}>{content}</Button>;
 }
 
-export function Composer({ number, replyToId, categories, onPublished, label = 'Comentar', compact = false, prompt = false, githubUrl }: {
-  number?: number; replyToId?: string; categories?: { id: string; name: string }[]; onPublished: (number: number) => void; label?: string; compact?: boolean; prompt?: boolean; githubUrl?: string;
+export function Composer({ number, replyToId, categories, onPublished, label = 'Comentar', compact = false, prompt = false, githubUrl, mobileIcon }: {
+  number?: number; replyToId?: string; categories?: { id: string; name: string }[]; onPublished: (number: number) => void; label?: string; compact?: boolean; prompt?: boolean; githubUrl?: string; mobileIcon?: ReactNode;
 }) {
   const session = useContext(SessionContext)?.session;
   const id = useId();
@@ -183,16 +183,18 @@ export function Composer({ number, replyToId, categories, onPublished, label = '
   const triggerSize = prompt ? 'lg' : compact ? number ? 'xs' : 'default' : 'default';
   const triggerVariant = prompt ? 'prompt' : number ? compact ? 'ghost' : 'outline' : 'default';
   const triggerLabel = prompt ? 'Participe da conversa…' : label;
+  const triggerContent = mobileIcon ? <><span className="hidden sm:inline">{triggerLabel}</span><span aria-hidden="true" className="text-2xl leading-none sm:hidden">{mobileIcon}</span></> : triggerLabel;
+  const triggerClassName = mobileIcon ? 'w-9 px-0 sm:w-auto sm:px-4' : undefined;
   if (!session.login || !session.enabled) return <Dialog.Root open={open} onOpenChange={setOpen}>
-    <Dialog.Trigger asChild><Button size={triggerSize} variant={triggerVariant}>{triggerLabel}</Button></Dialog.Trigger>
+    <Dialog.Trigger asChild><Button aria-label={mobileIcon ? triggerLabel : undefined} title={mobileIcon ? triggerLabel : undefined} size={triggerSize} className={triggerClassName} variant={triggerVariant}>{triggerContent}</Button></Dialog.Trigger>
     <Dialog.Portal><Dialog.Overlay data-slot="dialog-overlay" className="fixed inset-0 z-50 bg-black/50" /><Dialog.Content data-slot="dialog-content" className={loginPanelClass}>
-      <Dialog.Title className="text-lg font-semibold">Você está deslogado</Dialog.Title>
-      <Dialog.Description className="text-sm leading-relaxed text-muted-foreground">{session.enabled ? 'Entre com sua conta do GitHub para publicar sua mensagem aqui no Guia.' : 'A participação pelo Guia está em preparação. Por enquanto, você pode publicar pelo link do GitHub.'}</Dialog.Description>
-      <GitHubHelp />
-      <div className="flex flex-wrap gap-2">{session.enabled && <LoginButton />}
+      <div className="border-b px-6 py-4 pr-12"><Dialog.Title className="text-lg font-semibold">Entre para participar</Dialog.Title><Dialog.Description className="mt-1 text-sm leading-relaxed text-muted-foreground">{session.enabled ? 'Entre com o GitHub para publicar sua mensagem no Guia.' : 'Ainda não dá para publicar pelo Guia. Abra o tópico no GitHub para participar.'}</Dialog.Description></div>
+      <div className="space-y-4 p-6"><GitHubHelp /></div>
+      <div className="flex flex-wrap gap-2 border-t px-6 py-4">{session.enabled && <LoginButton />}
         {!session.enabled && githubUrl && <Button asChild variant="outline" size="sm"><a href={githubUrl} target="_blank" rel="noopener noreferrer">{number ? 'Responder no GitHub' : 'Criar tópico no GitHub'}</a></Button>}
         <Dialog.Close asChild><Button variant="ghost" size="sm">Cancelar</Button></Dialog.Close>
       </div>
+      <Dialog.Close aria-label="Fechar diálogo" className="absolute right-4 top-4 rounded-sm p-1 text-muted-foreground hover:bg-accent hover:text-foreground"><X aria-hidden="true" className="size-4" /></Dialog.Close>
     </Dialog.Content></Dialog.Portal>
   </Dialog.Root>;
   async function submit(event: React.FormEvent) {
@@ -211,24 +213,35 @@ export function Composer({ number, replyToId, categories, onPublished, label = '
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível confirmar a publicação. Confira o tópico no GitHub antes de tentar novamente.'); }
     finally { setBusy(false); }
   }
+  const form = <form data-motion onSubmit={submit} className={mobileIcon ? 'space-y-4' : 'space-y-4 rounded-lg border p-4'}>
+    {!number && <>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="min-w-0 space-y-2"><label htmlFor={`${id}-title`} className="text-sm font-medium">Título do tópico</label><Input id={`${id}-title`} value={title} onChange={event => setTitle(event.target.value)} required maxLength={256} disabled={busy} /></div>
+        <div className="min-w-0 space-y-2"><label htmlFor={`${id}-category`} className="text-sm font-medium">Categoria</label><Select value={categoryId} onValueChange={setCategoryId} disabled={busy}><SelectTrigger id={`${id}-category`} aria-label="Categoria" className="w-full"><SelectValue placeholder="Escolha" /></SelectTrigger><SelectContent>{categories?.map(category => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select></div>
+      </div>
+    </>}
+    <div className="space-y-2"><label htmlFor={`${id}-body`} className="text-sm font-medium">{number ? 'Sua mensagem' : 'Conteúdo do tópico'}</label><textarea id={`${id}-body`} value={body} onChange={event => setBody(event.target.value)} required maxLength={10000} rows={5} disabled={busy} className="w-full rounded-md border bg-transparent px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50" /></div>
+    <p className="text-xs text-muted-foreground">Sua mensagem aparecerá no Guia e no GitHub com o nome de {session.login}.</p>
+    <div className={mobileIcon ? '-mx-6 -mb-6 flex gap-2 border-t px-6 py-4' : 'flex gap-2'}><Button type="submit" disabled={busy || !body.trim() || (!number && (!title.trim() || !categoryId))}>{busy ? 'Publicando…' : 'Publicar'}</Button><Button type="button" variant="ghost" disabled={busy} onClick={() => setOpen(false)}>Cancelar</Button></div>
+    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+  </form>;
+  if (mobileIcon) return <><Dialog.Root open={open} onOpenChange={setOpen}>
+    <Dialog.Trigger asChild><Button aria-label={triggerLabel} title={triggerLabel} size={triggerSize} className={triggerClassName} variant={triggerVariant}>{triggerContent}</Button></Dialog.Trigger>
+    <Dialog.Portal><Dialog.Overlay data-slot="dialog-overlay" className="fixed inset-0 z-50 bg-black/50" /><Dialog.Content data-slot="dialog-content" className={loginPanelClass}>
+      <div className="border-b px-6 py-4 pr-12"><Dialog.Title className="text-lg font-semibold">Novo tópico</Dialog.Title></div>
+      <div className="overflow-y-auto p-6">{form}</div>
+      <Dialog.Close aria-label="Fechar diálogo" className="absolute right-4 top-4 rounded-sm p-1 text-muted-foreground hover:bg-accent hover:text-foreground"><X aria-hidden="true" className="size-4" /></Dialog.Close>
+    </Dialog.Content></Dialog.Portal>
+  </Dialog.Root>{success && <p role="status" className="text-sm text-muted-foreground">Mensagem publicada.</p>}</>;
   return <div data-open={open} className={layout}>
-    {!open ? <Button size={triggerSize} variant={triggerVariant} onClick={() => { setOpen(true); setSuccess(false); }}>{triggerLabel}</Button> : <form data-motion onSubmit={submit} className="space-y-4 rounded-lg border p-4">
-      {!number && <>
-        <div className="space-y-2"><label htmlFor={`${id}-title`} className="text-sm font-medium">Título do tópico</label><Input id={`${id}-title`} value={title} onChange={event => setTitle(event.target.value)} required maxLength={256} disabled={busy} /></div>
-        <Select value={categoryId} onValueChange={setCategoryId} disabled={busy}><SelectTrigger aria-label="Categoria do novo tópico"><SelectValue placeholder="Escolha a categoria" /></SelectTrigger><SelectContent>{categories?.map(category => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select>
-      </>}
-      <div className="space-y-2"><label htmlFor={`${id}-body`} className="text-sm font-medium">{number ? 'Sua mensagem' : 'Conteúdo do tópico'}</label><textarea id={`${id}-body`} value={body} onChange={event => setBody(event.target.value)} required maxLength={10000} rows={5} disabled={busy} className="w-full rounded-md border bg-transparent px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50" /></div>
-      <p className="text-xs text-muted-foreground">Sua mensagem aparecerá no Guia e no GitHub com o nome de {session.login}.</p>
-      <div className="flex gap-2"><Button type="submit" disabled={busy || !body.trim() || (!number && (!title.trim() || !categoryId))}>{busy ? 'Publicando…' : 'Publicar'}</Button><Button type="button" variant="ghost" disabled={busy} onClick={() => setOpen(false)}>Cancelar</Button></div>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-    </form>}
+    {!open ? <Button size={triggerSize} variant={triggerVariant} onClick={() => { setOpen(true); setSuccess(false); }}>{triggerContent}</Button> : form}
     {success && <p role="status" className="text-sm text-muted-foreground">Mensagem publicada.</p>}
   </div>;
 }
 
 const typeNames: Record<string, string> = { courses: 'Cursos', platforms: 'Plataformas de cursos', universities: 'Faculdades', bootcamps: 'Bootcamps', roadmaps: 'Roadmaps', books: 'Livros', certifications: 'Certificações', news: 'Notícias', blogs: 'Blogs', newsletters: 'Newsletters', podcasts: 'Podcasts', youtube: 'YouTube', creators: 'Criadores', articles: 'Artigos', tutorials: 'Tutoriais', studies: 'Estudos', 'case-studies': 'Estudos de caso', reports: 'Relatórios', communities: 'Comunidades', events: 'Eventos', meetups: 'Meetups', conferences: 'Conferências', hackathons: 'Hackathons', tools: 'Ferramentas', 'open-source': 'Projetos open source', challenges: 'Desafios', labs: 'Laboratórios', jobs: 'Sites de vagas', scholarships: 'Bolsas de estudo', mentoring: 'Programas de mentoria', volunteering: 'Programas de voluntariado' };
 
-export function ResourceContribution({initialCategory = ""}: {initialCategory?: string}) {
+export function ResourceContribution({initialCategory = "", onSubmitted}: {initialCategory?: string; onSubmitted?: () => void}) {
   const notify = useContributionToast();
   const session = useContext(SessionContext)?.session;
   const [busy, setBusy] = useState(false);
@@ -309,10 +322,11 @@ export function ResourceContribution({initialCategory = ""}: {initialCategory?: 
       setCommunityPlatformIds([]); setCommunityModality(''); setCreatorCategoryIds([]);
       setCommunityAudience(''); setCommunityUrls({});
       setUniversityType(''); setImageUrl(''); setImageFile(null); setMemberCount(''); setMoreThan(false);
+      onSubmitted?.();
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Não foi possível enviar a contribuição.'); }
     finally { setBusy(false); }
   }
-  if (!session?.login) return <div className="space-y-3 rounded-lg border p-5"><p>Entre com GitHub para sugerir um recurso. Criadores e comunidades vão para revisão do catálogo. As demais sugestões abrem uma conversa no fórum.</p><LoginButton /></div>;
+  if (!session?.login) return <div className="space-y-3 rounded-lg border p-5"><p>Entre com o GitHub para sugerir um recurso. Criadores e comunidades passam por revisão do catálogo. As outras sugestões abrem uma conversa no fórum.</p><LoginButton /></div>;
   return <ContributionWizard preview={<ContributionPreview name={name} summary={summary} description={description} category={typeNames[type] || type} area={labels[area] || area} languages={languages} image={imagePreview || imageUrl} url={url} details={[
       ['Tecnologias', technologies.map(id => labels[id] || id).join(', ')],
       ['Tipo de instituição', type === 'universities' ? universityTypes.find(item => item.id === universityType)?.name || '' : ''],
@@ -339,7 +353,7 @@ export function ResourceContribution({initialCategory = ""}: {initialCategory?: 
       <Label className="flex items-center gap-2 text-sm"><Checkbox name="communityMembersMoreThan" disabled={busy} checked={moreThan} onCheckedChange={checked => setMoreThan(checked === true)} />A comunidade tem mais membros que esse número</Label>
       <p className="text-xs text-muted-foreground">Informe uma contagem confirmada. Evite somar a mesma pessoa em plataformas diferentes.</p>
     </div>}
-    {type === 'communities' && <fieldset className="space-y-3"><legend className="text-sm font-medium">Plataformas da comunidade</legend><p className="text-xs text-muted-foreground">Marque todas as plataformas onde a comunidade está e informe o link de cada uma.</p>
+    {type === 'communities' && <fieldset className="space-y-3"><legend className="text-sm font-medium">Plataformas da comunidade</legend><p className="text-xs text-muted-foreground">Marque as plataformas usadas pela comunidade e informe o link de cada uma.</p>
       <div className="grid gap-2 sm:grid-cols-2">{communityPlatforms.map(item=><Label key={item.id} className="flex items-center gap-2 text-sm"><Checkbox name="communityPlatforms" value={item.id} checked={communityPlatformIds.includes(item.id)} onCheckedChange={checked => setCommunityPlatformIds(current=>checked === true?[...current,item.id]:current.filter(id=>id!==item.id))} />{item.name}</Label>)}</div>
       {communityPlatforms.filter(item=>communityPlatformIds.includes(item.id)).map(item=><Label key={item.id} className="block space-y-2 text-sm font-medium">Link no {item.name}<Input name={`communityLink-${item.id}`} type="url" required maxLength={500} placeholder="https://" value={communityUrls[item.id]||''} disabled={busy} onChange={event=>setCommunityUrls(current=>({...current,[item.id]:event.target.value}))} /></Label>)}
     </fieldset>}
@@ -372,7 +386,7 @@ export function ResourceContribution({initialCategory = ""}: {initialCategory?: 
     {type === 'communities' ? <div data-step-title="Categoria da comunidade"><ComboboxField label="Categoria da comunidade" name="area" value={area} onChange={setArea} disabled={busy} options={[...communityCategoryOrder, ...taxonomy.areas.filter(id=>!communityCategoryOrder.includes(id))].map(id=>({id,name:labels[id]||id}))} /></div> : <SelectField label="Assunto principal" name="area" required value={area} onChange={setArea} placeholder="Escolha um assunto" options={taxonomy.areas.map(id => ({id, name:labels[id] || id}))} />}
     <fieldset className="space-y-2"><legend className="text-sm font-medium">Tecnologias (opcional)</legend><div className="flex flex-wrap gap-4">{taxonomy.technologies.map((technology: string) => <Label key={technology} className="flex items-center gap-2 text-sm"><Checkbox checked={technologies.includes(technology)} onCheckedChange={checked => setTechnologies(current => checked === true ? [...current, technology] : current.filter(item => item !== technology))} />{labels[technology] || technology}</Label>)}</div></fieldset>
     <fieldset className="space-y-2"><legend className="text-sm font-medium">Idiomas disponíveis</legend><div className="flex flex-wrap gap-4">{taxonomy.languages.map((language: string) => <Label key={language} className="flex items-center gap-2 text-sm"><Checkbox checked={languages.includes(language)} onCheckedChange={checked => setLanguages(current => checked === true ? [...current, language] : current.filter(item => item !== language))} />{language}</Label>)}</div></fieldset>
-    <div data-step-title="Revisar e enviar" className="space-y-5"><dl className="grid gap-4 text-sm sm:grid-cols-2">{[['Categoria',typeNames[type] || type],[copy.name,name],[copy.url,url],[copy.summary,summary],[copy.description,description],['Assunto',labels[area] || area],['Idiomas',languages.join(', ')]].map(([label,value])=><div key={label} className="min-w-0 space-y-1"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{value || 'Não informado'}</dd></div>)}</dl><p className="text-xs text-muted-foreground">{catalogOnly ? 'Os mantenedores revisam sua sugestão antes de adicioná-la ao catálogo. Criadores e comunidades não abrem conversas no fórum. O GitHub pode criar uma cópia do catálogo na sua conta para enviar a proposta.' : 'Sua sugestão abre uma conversa em Ideias, onde a comunidade pode comentar. Após a revisão, um mantenedor prepara o cadastro para entrar no catálogo.'}</p>
+    <div data-step-title="Revisar e enviar" className="space-y-5"><dl className="grid gap-4 text-sm sm:grid-cols-2">{[['Categoria',typeNames[type] || type],[copy.name,name],[copy.url,url],[copy.summary,summary],[copy.description,description],['Assunto',labels[area] || area],['Idiomas',languages.join(', ')]].map(([label,value])=><div key={label} className="min-w-0 space-y-1"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{value || 'Não informado'}</dd></div>)}</dl><p className="text-xs text-muted-foreground">{catalogOnly ? 'Os mantenedores revisam sua sugestão antes de incluí-la no catálogo. Criadores e comunidades não abrem tópicos no fórum. Para enviar a proposta, o GitHub pode criar uma cópia do catálogo na sua conta.' : 'Sua sugestão abre um tópico em Ideias para a comunidade comentar. Depois da revisão, um mantenedor prepara o cadastro para o catálogo.'}</p>
     <Button type="submit" disabled={busy || !type || !area || !languages.length || type === 'universities' && !universityType || creatorCategory && !creatorCategoryIds.length || type === 'communities' && (!communityAudience || !communityScope || communityScope === 'regional' && !communityStates.length || !communityModality || !communityPlatformIds.length || communityPlatformIds.some(id=>!communityUrls[id]?.trim()))}>{busy ? 'Enviando…' : catalogOnly ? 'Enviar para revisão' : 'Enviar sugestão e abrir conversa'}</Button>
     </div>
   </ContributionWizard>;

@@ -62,7 +62,7 @@ function useStudyActivity() {
       .catch(() => {
         if (!controller.signal.aborted) {
           setActivity({});
-          setError("A atividade dos itens não carregou. Tente novamente.");
+          setError("A atividade dos itens não carregou.");
         }
       })
       .finally(() => {
@@ -474,10 +474,25 @@ export function StudyDetail({ resource }: { resource: Resource }) {
           Carregando atividade…
         </p>
       )}
+      {/*Substituir o bloco abaixo por um bloco com um onclick={refresh} */}
       {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
+        <p className="text-sm text-destructive">{error}
+          <Button 
+            className="bg-transparent 
+                      hover:bg-transparent 
+                      border-0 p-0 
+                      font-inherit inline 
+                      underline cursor-pointer
+                      shadow-none
+                      border-none
+                      dark:border-0"
+            type="button" 
+            size="xs" 
+            variant="outline"  
+            onClick={refresh}> 
+               Tentar novamente. 
+          </Button></p>
+      
       )}
       {resource.demo ? (
         <p className="text-sm text-muted-foreground">
